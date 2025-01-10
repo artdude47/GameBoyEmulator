@@ -42,5 +42,13 @@ namespace GameBoyEmulator.Memory
                 _memory[address] = value;
             }
         }
+
+        public void LoadRom(byte[] romData)
+        {
+            if (romData.Length > _memory.Length)
+                throw new ArgumentException("ROM data exceeds memory size!");
+
+            Array.Copy(romData, _memory, romData.Length);
+        }
     }
 }

@@ -23,5 +23,24 @@ namespace GameBoyEmulator
             string results = MemoryTests.RunTests();
             MessageBox.Show(results, "Memory Test Result");
         }
+
+        private void btnTestLD_BC_d16_Click(object sender, EventArgs e)
+        {
+            string result = TestLD_BC_d16.RunTest();
+            Console.WriteLine(result);
+            MessageBox.Show(result);
+        }
+
+        private void btnTestINC_BC_Click(object sender, EventArgs e)
+        {
+            string result = TestINC_BC.RunTest();
+            MessageBox.Show(result);
+        }
+
+        private void btnTestDEC_BC_Click(object sender, EventArgs e)
+        {
+            string result = TestDEC_BC.RunTest();
+            MessageBox.Show(result);
+        }
     }
 }

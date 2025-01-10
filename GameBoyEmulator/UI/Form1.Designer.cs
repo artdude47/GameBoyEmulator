@@ -30,6 +30,9 @@ namespace GameBoyEmulator
         private void InitializeComponent()
         {
             this.btnTestMemory = new System.Windows.Forms.Button();
+            this.btnTestLD_BC_d16 = new System.Windows.Forms.Button();
+            this.btnTestINC_BC = new System.Windows.Forms.Button();
+            this.btnTestDEC_BC = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btnTestMemory
@@ -42,11 +45,44 @@ namespace GameBoyEmulator
             this.btnTestMemory.UseVisualStyleBackColor = true;
             this.btnTestMemory.Click += new System.EventHandler(this.btnTestMemory_Click);
             // 
+            // btnTestLD_BC_d16
+            // 
+            this.btnTestLD_BC_d16.Location = new System.Drawing.Point(120, 12);
+            this.btnTestLD_BC_d16.Name = "btnTestLD_BC_d16";
+            this.btnTestLD_BC_d16.Size = new System.Drawing.Size(102, 34);
+            this.btnTestLD_BC_d16.TabIndex = 1;
+            this.btnTestLD_BC_d16.Text = "Test LD_BC_d16";
+            this.btnTestLD_BC_d16.UseVisualStyleBackColor = true;
+            this.btnTestLD_BC_d16.Click += new System.EventHandler(this.btnTestLD_BC_d16_Click);
+            // 
+            // btnTestINC_BC
+            // 
+            this.btnTestINC_BC.Location = new System.Drawing.Point(228, 12);
+            this.btnTestINC_BC.Name = "btnTestINC_BC";
+            this.btnTestINC_BC.Size = new System.Drawing.Size(102, 34);
+            this.btnTestINC_BC.TabIndex = 2;
+            this.btnTestINC_BC.Text = "Test INC_BC";
+            this.btnTestINC_BC.UseVisualStyleBackColor = true;
+            this.btnTestINC_BC.Click += new System.EventHandler(this.btnTestINC_BC_Click);
+            // 
+            // btnTestDEC_BC
+            // 
+            this.btnTestDEC_BC.Location = new System.Drawing.Point(336, 12);
+            this.btnTestDEC_BC.Name = "btnTestDEC_BC";
+            this.btnTestDEC_BC.Size = new System.Drawing.Size(102, 34);
+            this.btnTestDEC_BC.TabIndex = 3;
+            this.btnTestDEC_BC.Text = "Test DEC_BC";
+            this.btnTestDEC_BC.UseVisualStyleBackColor = true;
+            this.btnTestDEC_BC.Click += new System.EventHandler(this.btnTestDEC_BC_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.btnTestDEC_BC);
+            this.Controls.Add(this.btnTestINC_BC);
+            this.Controls.Add(this.btnTestLD_BC_d16);
             this.Controls.Add(this.btnTestMemory);
             this.Name = "Form1";
             this.Text = "Form1";
@@ -57,6 +93,9 @@ namespace GameBoyEmulator
         #endregion
 
         private System.Windows.Forms.Button btnTestMemory;
+        private System.Windows.Forms.Button btnTestLD_BC_d16;
+        private System.Windows.Forms.Button btnTestINC_BC;
+        private System.Windows.Forms.Button btnTestDEC_BC;
     }
 }
 

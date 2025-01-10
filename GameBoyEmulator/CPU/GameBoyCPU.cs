@@ -7,7 +7,7 @@ using GameBoyEmulator.Memory;
 
 namespace GameBoyEmulator.CPU
 {
-    class CPU
+    class GameBoyCPU
     {
         //8-bit registers
         public byte A, B, C, D, E, H, L;
@@ -32,7 +32,7 @@ namespace GameBoyEmulator.CPU
         //Memory
         private readonly GameBoyMemory _memory;
 
-        public CPU(GameBoyMemory memory)
+        public GameBoyCPU(GameBoyMemory memory)
         {
             _memory = memory;
         }
@@ -40,18 +40,13 @@ namespace GameBoyEmulator.CPU
         public void Step()
         {
             //Fetch opcode
-            byte opcode = ReadByte(PC);
+            byte opcode = _memory.ReadByte(PC);
 
             //Increment the PC
             PC++;
 
             //Execute the opcode
             Execute(opcode);
-        }
-
-        public byte ReadByte(ushort address)
-        {
-            return 0; //Need memory sorted out
         }
 
         public void Execute(byte opcode)
@@ -61,9 +56,50 @@ namespace GameBoyEmulator.CPU
                 case 0x00: // NOP
                     break;
 
+                case 0x01: // Example: LD BC, d16
+                    LD_BC_d16();
+                    break;
+
+                case 0x03: // INC BC
+                    INC_BC();
+                    break;
+
+                case 0x0B: // DEC BC
+                    DEC_BC();
+                    break;
+
                 default:
                     throw new NotImplementedException($"Unknown opcode: {opcode:X2}");
             }
+        }
+
+        private void LD_BC_d16()
+        {
+            byte low = _memory.ReadByte(PC);
+            PC++;
+
+            byte high = _memory.ReadByte(PC);
+            PC++;
+
+            B = high;
+            C = low;
+        }
+
+        private void INC_BC()
+        {
+            ushort value = BC;
+            value++;
+            B = (byte)(value >> 8);
+            C = (byte)(value & 0xFF);
+        }
+
+        private void DEC_BC()
+        {
+            // Decrement the BC Register pair
+            ushort value = BC;
+            value--;
+            B = (byte)(value >> 8);
+            C = (byte)(value & 0xFF);
         }
     }
 }
