@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using GameBoyEmulator.Tests;
 
 namespace GameBoyEmulator
 {
@@ -15,6 +16,12 @@ namespace GameBoyEmulator
         public Form1()
         {
             InitializeComponent();
+        }
+
+        private void btnTestMemory_Click(object sender, EventArgs e)
+        {
+            string results = MemoryTests.RunTests();
+            MessageBox.Show(results, "Memory Test Result");
         }
     }
 }

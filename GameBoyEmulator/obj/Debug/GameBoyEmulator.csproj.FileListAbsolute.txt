@@ -1,0 +1,10 @@
+D:\Desktop\Portfolio Projects\GameBoyEmulator\GameBoyEmulator\bin\Debug\GameBoyEmulator.exe.config
+D:\Desktop\Portfolio Projects\GameBoyEmulator\GameBoyEmulator\bin\Debug\GameBoyEmulator.exe
+D:\Desktop\Portfolio Projects\GameBoyEmulator\GameBoyEmulator\bin\Debug\GameBoyEmulator.pdb
+D:\Desktop\Portfolio Projects\GameBoyEmulator\GameBoyEmulator\obj\Debug\GameBoyEmulator.csproj.AssemblyReference.cache
+D:\Desktop\Portfolio Projects\GameBoyEmulator\GameBoyEmulator\obj\Debug\GameBoyEmulator.Properties.Resources.resources
+D:\Desktop\Portfolio Projects\GameBoyEmulator\GameBoyEmulator\obj\Debug\GameBoyEmulator.Form1.resources
+D:\Desktop\Portfolio Projects\GameBoyEmulator\GameBoyEmulator\obj\Debug\GameBoyEmulator.csproj.GenerateResource.cache
+D:\Desktop\Portfolio Projects\GameBoyEmulator\GameBoyEmulator\obj\Debug\GameBoyEmulator.csproj.CoreCompileInputs.cache
+D:\Desktop\Portfolio Projects\GameBoyEmulator\GameBoyEmulator\obj\Debug\GameBoyEmulator.exe
+D:\Desktop\Portfolio Projects\GameBoyEmulator\GameBoyEmulator\obj\Debug\GameBoyEmulator.pdb

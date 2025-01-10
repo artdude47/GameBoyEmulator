@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GameBoyEmulator.Memory;
 
 namespace GameBoyEmulator.CPU
 {
@@ -27,6 +28,14 @@ namespace GameBoyEmulator.CPU
         //CPU State 
         public bool Halted { get; set; }
         public bool Stopped { get; set; }
+
+        //Memory
+        private readonly GameBoyMemory _memory;
+
+        public CPU(GameBoyMemory memory)
+        {
+            _memory = memory;
+        }
 
         public void Step()
         {
