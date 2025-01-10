@@ -9,6 +9,7 @@ namespace GameBoyEmulator.CPU
 {
     class GameBoyCPU
     {
+        #region variables
         //8-bit registers
         public byte A, B, C, D, E, H, L;
 
@@ -36,6 +37,7 @@ namespace GameBoyEmulator.CPU
         {
             _memory = memory;
         }
+        #endregion
 
         public void Step()
         {
@@ -60,8 +62,16 @@ namespace GameBoyEmulator.CPU
                     LD_BC_d16();
                     break;
 
+                case 0x02: // LD (BC), A
+                    LD_BC_A();
+                    break;
+
                 case 0x03: // INC BC
                     INC_BC();
+                    break;
+
+                case 0x0A: // LD A, (BC)
+                    LD_A_BC();
                     break;
 
                 case 0x0B: // DEC BC
@@ -100,6 +110,18 @@ namespace GameBoyEmulator.CPU
             value--;
             B = (byte)(value >> 8);
             C = (byte)(value & 0xFF);
+        }
+
+        private void LD_BC_A()
+        {
+            ushort address = BC;
+            _memory.WriteByte(address, A);
+        }
+
+        private void LD_A_BC()
+        {
+            ushort address = BC;
+            A = _memory.ReadByte(address);
         }
     }
 }

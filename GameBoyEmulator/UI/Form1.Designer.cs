@@ -33,6 +33,8 @@ namespace GameBoyEmulator
             this.btnTestLD_BC_d16 = new System.Windows.Forms.Button();
             this.btnTestINC_BC = new System.Windows.Forms.Button();
             this.btnTestDEC_BC = new System.Windows.Forms.Button();
+            this.btnTest_LD_A_BC = new System.Windows.Forms.Button();
+            this.btnTestLD_BC_A = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btnTestMemory
@@ -75,11 +77,33 @@ namespace GameBoyEmulator
             this.btnTestDEC_BC.UseVisualStyleBackColor = true;
             this.btnTestDEC_BC.Click += new System.EventHandler(this.btnTestDEC_BC_Click);
             // 
+            // btnTest_LD_A_BC
+            // 
+            this.btnTest_LD_A_BC.Location = new System.Drawing.Point(552, 12);
+            this.btnTest_LD_A_BC.Name = "btnTest_LD_A_BC";
+            this.btnTest_LD_A_BC.Size = new System.Drawing.Size(102, 34);
+            this.btnTest_LD_A_BC.TabIndex = 4;
+            this.btnTest_LD_A_BC.Text = "Test LD_A_BC";
+            this.btnTest_LD_A_BC.UseVisualStyleBackColor = true;
+            this.btnTest_LD_A_BC.Click += new System.EventHandler(this.btnTest_LD_A_BC_Click);
+            // 
+            // btnTestLD_BC_A
+            // 
+            this.btnTestLD_BC_A.Location = new System.Drawing.Point(444, 12);
+            this.btnTestLD_BC_A.Name = "btnTestLD_BC_A";
+            this.btnTestLD_BC_A.Size = new System.Drawing.Size(102, 34);
+            this.btnTestLD_BC_A.TabIndex = 5;
+            this.btnTestLD_BC_A.Text = "Test LD_BC_A";
+            this.btnTestLD_BC_A.UseVisualStyleBackColor = true;
+            this.btnTestLD_BC_A.Click += new System.EventHandler(this.btnTestLD_BC_A_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.btnTestLD_BC_A);
+            this.Controls.Add(this.btnTest_LD_A_BC);
             this.Controls.Add(this.btnTestDEC_BC);
             this.Controls.Add(this.btnTestINC_BC);
             this.Controls.Add(this.btnTestLD_BC_d16);
@@ -96,6 +120,8 @@ namespace GameBoyEmulator
         private System.Windows.Forms.Button btnTestLD_BC_d16;
         private System.Windows.Forms.Button btnTestINC_BC;
         private System.Windows.Forms.Button btnTestDEC_BC;
+        private System.Windows.Forms.Button btnTest_LD_A_BC;
+        private System.Windows.Forms.Button btnTestLD_BC_A;
     }
 }
 

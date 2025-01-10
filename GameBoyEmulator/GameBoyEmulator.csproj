@@ -51,6 +51,8 @@
     <Compile Include="Tests\MemoryTests.cs" />
     <Compile Include="Tests\TestDEC_BC.cs" />
     <Compile Include="Tests\TestINC_BC.cs" />
+    <Compile Include="Tests\TestLD_A_BC.cs" />
+    <Compile Include="Tests\TestLD_BC_A.cs" />
     <Compile Include="Tests\TestLD_BC_d16.cs" />
     <Compile Include="UI\Form1.cs">
       <SubType>Form</SubType>

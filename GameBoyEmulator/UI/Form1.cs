@@ -42,5 +42,17 @@ namespace GameBoyEmulator
             string result = TestDEC_BC.RunTest();
             MessageBox.Show(result);
         }
+
+        private void btnTestLD_BC_A_Click(object sender, EventArgs e)
+        {
+            string result = TestLD_BC_A.RunTest();
+            MessageBox.Show(result);
+        }
+
+        private void btnTest_LD_A_BC_Click(object sender, EventArgs e)
+        {
+            string result = TestLD_A_BC.RunTest();
+            MessageBox.Show(result);
+        }
     }
 }
