@@ -371,6 +371,11 @@ namespace GameBoyEmulator.CPU
                     A = _memory.ReadByte(address);
                     break;
 
+                case 0xD6: // SUB A, d8
+                    byte immediate = _memory.ReadByte(PC++);
+                    SUB_A_r(immediate);
+                    break;
+
                 //ADDITION
                 case 0x80: ADD_A_r(B); break; // ADD A, B
                 case 0x81: ADD_A_r(C); break; // ADD A, C
@@ -441,7 +446,7 @@ namespace GameBoyEmulator.CPU
                 case 0xBF: CP_A_r(A); break; // CP A, A
                 case 0xBE: CP_A_r(_memory.ReadByte(HL)); break; // CP A, (HL)
                 case 0xFE: // CP A, d8
-                    byte immediate = _memory.ReadByte(PC);
+                    immediate = _memory.ReadByte(PC);
                     PC++;
                     CP_A_r(immediate);
                     break;
@@ -573,6 +578,42 @@ namespace GameBoyEmulator.CPU
                 case 0xEA: LD_nn_A(); break; // LD (n), A
                 case 0xF9: LD_SP_HL(); break; // LD SP, HL
                 case 0x31: LD_SP_d16(); break; // LD SP, d16
+
+                case 0xE6: // AND A, d8
+                    immediate = _memory.ReadByte(PC++);
+                    AND_A_r(immediate);
+                    break;
+
+                case 0x77: // LD (HL), A
+                    _memory.WriteByte(HL, A);
+                    break;
+
+                case 0x30: // JR NC, r8
+                    if ((F & 0x10) == 0)
+                    {
+                        offset = (byte)_memory.ReadByte(PC);
+                        PC++;
+                        PC = (ushort)(PC + offset);
+                        extraCycles += 4;
+                    }
+                    else
+                    {
+                        PC++;
+                    }
+                    break;
+
+                case 0x57: // LD D, A
+                    D = A;
+                    break;
+
+                case 0xD9: // RETI
+                    RET();
+                    EnableInterrupts();
+                    break;
+
+                case 0x11: // LD DE, d16
+                    LD_d16(ref D, ref E);
+                    break;
 
                 case 0x76: HALT(); break; // HALT
 
