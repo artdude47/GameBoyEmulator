@@ -26,33 +26,32 @@ namespace GameBoyEmulator
 
         private void btnTestLD_BC_d16_Click(object sender, EventArgs e)
         {
-            string result = TestLD_BC_d16.RunTest();
-            Console.WriteLine(result);
-            MessageBox.Show(result);
-        }
+            // Use a StringBuilder to collect test results
+            StringBuilder results = new StringBuilder();
 
-        private void btnTestINC_BC_Click(object sender, EventArgs e)
-        {
-            string result = TestINC_BC.RunTest();
-            MessageBox.Show(result);
-        }
+            // Run each test method and append its result
+            results.AppendLine(TestLD_BC_d16.RunTest());
+            results.AppendLine(TestINC_BC.RunTest());
+            results.AppendLine(TestDEC_BC.RunTest());
+            results.AppendLine(TestLD_BC_A.RunTest());
+            results.AppendLine(TestLD_A_BC.RunTest());
+            results.AppendLine(TestLD_Immediate.RunTest());
+            results.AppendLine(TestLD_HL_Instructions.RunTest());
+            results.AppendLine(TestADD_A_r.RunTest());
+            results.AppendLine(TestSUB_A_r.RunTest());
+            results.AppendLine(TestSBC_A_r.RunTest());
+            results.AppendLine(TestAND_A_r.RunTest());
+            results.AppendLine(TestOR_A_r.RunTest());
+            results.AppendLine(TestXOR_A_r.RunTest());
+            results.AppendLine(TestCP_A_r.RunTest());
+            results.AppendLine(TestJumps.RunTest());
+            results.AppendLine(TestCallAndRet.RunTest());
+            results.AppendLine(TestPushAndPop.RunTest());
+            results.AppendLine(TestIncDec.RunTest());
+            results.AppendLine(TestSuite.RunAllTests());
 
-        private void btnTestDEC_BC_Click(object sender, EventArgs e)
-        {
-            string result = TestDEC_BC.RunTest();
-            MessageBox.Show(result);
-        }
-
-        private void btnTestLD_BC_A_Click(object sender, EventArgs e)
-        {
-            string result = TestLD_BC_A.RunTest();
-            MessageBox.Show(result);
-        }
-
-        private void btnTest_LD_A_BC_Click(object sender, EventArgs e)
-        {
-            string result = TestLD_A_BC.RunTest();
-            MessageBox.Show(result);
+            // Return the full results
+            MessageBox.Show(results.ToString());
         }
     }
 }
