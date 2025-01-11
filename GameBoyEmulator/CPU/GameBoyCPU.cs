@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using GameBoyEmulator.Memory;
 
 namespace GameBoyEmulator.CPU
@@ -31,10 +27,6 @@ namespace GameBoyEmulator.CPU
         public bool Stopped { get; set; }
         public bool IME; // Interrupt Master Enable flag
 
-        //Timers
-        private int dividerCounter = 0;
-        private int timerCounter = 0;
-
         //Memory
         private readonly GameBoyMemory _memory;
 
@@ -42,30 +34,219 @@ namespace GameBoyEmulator.CPU
         {
             _memory = memory;
         }
+
+        //Timers CPU runs at ~4.19 MHz => 4,194,304 cycles per second
+        //DIV increments every 256 cycles => 16,384 Hz
+        private int _divCounter; //For the DIV register increments
+        private int _timerCounter; //For the TIMA increments
+
         #endregion
 
-        public void Step()
+        #region OPCODE CYCLE LOOKUP
+        public static readonly int[] BaseCycles = new int[256]
         {
-            HandleInterrupts(); // Check and handle interrupts
+            // 0x00-0x0F
+            4,12, 8, 8, 4, 4, 8, 4, 20, 8, 8, 8, 4, 4, 8, 4,
+            // 0x10-0x1F
+            4,12, 8, 8, 4, 4, 8, 4, 12, 8, 8, 8, 4, 4, 8, 4,
+            // 0x20-0x2F
+            8,12, 8, 8, 4, 4, 8, 4,  8, 8, 8, 8, 4, 4, 8, 4,
+            // 0x30-0x3F
+            8,12, 8, 8,12,12,12, 4,  8, 8, 8, 8, 4, 4, 8, 4,
+    
+            // 0x40-0x4F
+            4, 4, 4, 4, 4, 4, 8, 4,  4, 4, 4, 4, 4, 4, 8, 4,
+            // 0x50-0x5F
+            4, 4, 4, 4, 4, 4, 8, 4,  4, 4, 4, 4, 4, 4, 8, 4,
+            // 0x60-0x6F
+            4, 4, 4, 4, 4, 4, 8, 4,  4, 4, 4, 4, 4, 4, 8, 4,
+            // 0x70-0x7F
+            8, 8, 8, 8, 8, 8, 4, 8,  4, 4, 4, 4, 4, 4, 8, 4,
+    
+            // 0x80-0x8F
+            4, 4, 4, 4, 4, 4, 8, 4,  4, 4, 4, 4, 4, 4, 8, 4,
+            // 0x90-0x9F
+            4, 4, 4, 4, 4, 4, 8, 4,  4, 4, 4, 4, 4, 4, 8, 4,
+            // 0xA0-0xAF
+            4, 4, 4, 4, 4, 4, 8, 4,  4, 4, 4, 4, 4, 4, 8, 4,
+            // 0xB0-0xBF
+            4, 4, 4, 4, 4, 4, 8, 4,  4, 4, 4, 4, 4, 4, 8, 4,
+    
+            // 0xC0-0xCF
+            8,12,12,16,12,16, 8,16,  8,16,12, 4,12,24, 8,16,
+            // 0xD0-0xDF
+            8,12,12, 0,12,16, 8,16,  8,16,12, 0,12, 0, 8,16,
+            // 0xE0-0xEF
+            12,12, 8, 0, 0,16, 8,16, 16, 4,16, 0, 0, 0, 8,16,
+            // 0xF0-0xFF
+            12,12, 8, 4, 0,16, 8,16, 12, 8,16, 4, 0, 0, 8,16
+        };
 
-            //If an interrupt was handled, return early to avoid executing additional instructions
-            if (PC == 0x0040 || PC == 0x0048 || PC == 0x0050 || PC == 0x0058 || PC == 0x0060)
+        public static readonly int[] CbCycles = new int[256]
+        {
+            // 0x00..0x07: RLC B..A  (Reg = 8, (HL) = 16) 
+            8, 8, 8, 8, 8, 8,16, 8,
+            // 0x08..0x0F: RRC B..A
+            8, 8, 8, 8, 8, 8,16, 8,
+            // 0x10..0x17: RL B..A
+            8, 8, 8, 8, 8, 8,16, 8,
+            // 0x18..0x1F: RR B..A
+            8, 8, 8, 8, 8, 8,16, 8,
+
+            // 0x20..0x27: SLA B..A
+            8, 8, 8, 8, 8, 8,16, 8,
+            // 0x28..0x2F: SRA B..A
+            8, 8, 8, 8, 8, 8,16, 8,
+            // 0x30..0x37: SWAP B..A
+            8, 8, 8, 8, 8, 8,16, 8,
+            // 0x38..0x3F: SRL B..A
+            8, 8, 8, 8, 8, 8,16, 8,
+
+            // 0x40..0x47: BIT 0,B..A  (Reg=8, (HL)=12)
+            8, 8, 8, 8, 8, 8,12, 8,
+            // 0x48..0x4F: BIT 1,B..A
+            8, 8, 8, 8, 8, 8,12, 8,
+            // 0x50..0x57: BIT 2,B..A
+            8, 8, 8, 8, 8, 8,12, 8,
+            // 0x58..0x5F: BIT 3,B..A
+            8, 8, 8, 8, 8, 8,12, 8,
+
+            // 0x60..0x67: BIT 4,B..A
+            8, 8, 8, 8, 8, 8,12, 8,
+            // 0x68..0x6F: BIT 5,B..A
+            8, 8, 8, 8, 8, 8,12, 8,
+            // 0x70..0x77: BIT 6,B..A
+            8, 8, 8, 8, 8, 8,12, 8,
+            // 0x78..0x7F: BIT 7,B..A
+            8, 8, 8, 8, 8, 8,12, 8,
+
+            // 0x80..0x87: RES 0,B..A  (Reg=8, (HL)=16)
+            8, 8, 8, 8, 8, 8,16, 8,
+            // 0x88..0x8F: RES 1,B..A
+            8, 8, 8, 8, 8, 8,16, 8,
+            // 0x90..0x97: RES 2,B..A
+            8, 8, 8, 8, 8, 8,16, 8,
+            // 0x98..0x9F: RES 3,B..A
+            8, 8, 8, 8, 8, 8,16, 8,
+
+            // 0xA0..0xA7: RES 4,B..A
+            8, 8, 8, 8, 8, 8,16, 8,
+            // 0xA8..0xAF: RES 5,B..A
+            8, 8, 8, 8, 8, 8,16, 8,
+            // 0xB0..0xB7: RES 6,B..A
+            8, 8, 8, 8, 8, 8,16, 8,
+            // 0xB8..0xBF: RES 7,B..A
+            8, 8, 8, 8, 8, 8,16, 8,
+
+            // 0xC0..0xC7: SET 0,B..A
+            8, 8, 8, 8, 8, 8,16, 8,
+            // 0xC8..0xCF: SET 1,B..A
+            8, 8, 8, 8, 8, 8,16, 8,
+            // 0xD0..0xD7: SET 2,B..A
+            8, 8, 8, 8, 8, 8,16, 8,
+            // 0xD8..0xDF: SET 3,B..A
+            8, 8, 8, 8, 8, 8,16, 8,
+
+            // 0xE0..0xE7: SET 4,B..A
+            8, 8, 8, 8, 8, 8,16, 8,
+            // 0xE8..0xEF: SET 5,B..A
+            8, 8, 8, 8, 8, 8,16, 8,
+            // 0xF0..0xF7: SET 6,B..A
+            8, 8, 8, 8, 8, 8,16, 8,
+            // 0xF8..0xFF: SET 7,B..A
+            8, 8, 8, 8, 8, 8,16, 8,
+        };
+
+        #endregion
+
+        public int Step()
+        {
+            // Check and handle interrupts first
+            HandleInterrupts(); 
+
+            //IF HALT is active (and no interrupts woke it) or the CPU is stopped
+            if (Halted)
             {
-                return;
+                // Return minimal cycles
+                return 4;
+            }
+            if (Stopped)
+            {
+                return 4;
             }
 
             //Fetch opcode
             byte opcode = _memory.ReadByte(PC);
 
+            // Get base cycles (minimum, not counting conditionals)
+            int cyclesUsed = BaseCycles[opcode];
+
             //Increment the PC
             PC++;
 
-            //Execute the opcode
-            Execute(opcode);
+            //Execute the opcode and add any additional cycles
+            cyclesUsed += ExecuteInstructions(opcode);
+
+            return cyclesUsed;
         }
 
-        public void Execute(byte opcode)
+        public void UpdateTimers(int cycles)
         {
+            //UPDATE DIV
+            _divCounter += cycles;
+            while (_divCounter >= 256)
+            {
+                _divCounter -= 256;
+                byte div = _memory.ReadByte(0xFF04); // Read DIV
+                div++;
+                _memory.WriteByte(0xFF04, div);
+            }
+
+            //Check TAC to see if TIMA is enabled
+            byte tac = _memory.ReadByte(0xFF07);
+            bool timerEnable = (tac & 0x04) != 0;
+            if (!timerEnable) return;
+
+            //Determine the timer's input clock frequency
+            int inputClock;
+            switch (tac & 0x03)
+            {
+                case 0: inputClock = 1024; break;
+                case 1: inputClock = 16; break;
+                case 2: inputClock = 64; break;
+                case 3: inputClock = 256; break;
+                default: inputClock = 1024; break;
+            }
+
+            // Increment TIMA
+            _timerCounter += cycles;
+            while (_timerCounter >= inputClock)
+            {
+                _timerCounter -= inputClock;
+
+                byte tima = _memory.ReadByte(0xFF05);
+                tima++;
+                if (tima == 0)
+                {
+                    byte tma = _memory.ReadByte(0xFF06);
+                    _memory.WriteByte(0xFF05, tma);
+
+                    byte IF = _memory.ReadByte(0xFF0F);
+                    IF |= 0x04;
+                    _memory.WriteByte(0xFF0F, IF);
+                }
+                else
+                {
+                    _memory.WriteByte(0xFF05, tima);
+                }
+            }
+        }
+
+        private int ExecuteInstructions(byte opcode)
+        {
+            int extraCycles = 0; //Accumulate any extra cycles here
+            bool taken = false;
+
             switch (opcode)
             {
                 case 0x00: // NOP
@@ -107,8 +288,16 @@ namespace GameBoyEmulator.CPU
                     LD_d8(ref E);
                     break;
 
+                case 0x21: // LD HL, d16
+                    LD_d16(ref H, ref L);
+                    break;
+
                 case 0x22: // LD (HL+), A
                     LD_XXp_A(ref H, ref L);
+                    break;
+
+                case 0x23: // INC HL Register Pair
+                    INC_HL_RegisterPair();
                     break;
 
                 case 0x26: //LD H, d8
@@ -129,6 +318,57 @@ namespace GameBoyEmulator.CPU
 
                 case 0x3A: // LD A, (HL-)
                     LD_A_XXm(ref H, ref L);
+                    break;
+
+                case 0x3E: // LD A, d8
+                    LD_d8(ref A);
+                    break;
+
+                case 0xE0: //LDH (a8), A
+                    byte offset = _memory.ReadByte(PC);
+                    PC++;
+
+                    ushort address = (ushort)(0xFF00 + offset);
+                    _memory.WriteByte(address, A);
+                    break;
+
+                case 0x47: //LD B, A
+                    B = A;
+                    break;
+
+                case 0x78: // LD A, B
+                    A = B;
+                    break;
+
+                case 0x79: // LD A, C
+                    A = C;
+                    break;
+
+                case 0x7A: //LD A, D
+                    A = D;
+                    break;
+
+                case 0x7B: //LD A, E
+                    A = E;
+                    break;
+
+                case 0x7D: //LD A, L
+                    A = L;
+                    break;
+
+                case 0x7C: //LD A, H
+                    A = H;
+                    break;
+
+                case 0x7F: //LD A, A
+                    A = A;
+                    break;
+
+                case 0xF0: //LDH A, (a8)
+                    offset = _memory.ReadByte(PC);
+                    PC++;
+                    address = (ushort)(0xFF00 + offset);
+                    A = _memory.ReadByte(address);
                     break;
 
                 //ADDITION
@@ -200,35 +440,85 @@ namespace GameBoyEmulator.CPU
                 case 0xBD: CP_A_r(L); break; // CP A, L
                 case 0xBF: CP_A_r(A); break; // CP A, A
                 case 0xBE: CP_A_r(_memory.ReadByte(HL)); break; // CP A, (HL)
+                case 0xFE: // CP A, d8
+                    byte immediate = _memory.ReadByte(PC);
+                    PC++;
+                    CP_A_r(immediate);
+                    break;
 
                 //UNCONDITIONAL JUMPS
                 case 0xC3: JP_nn(); break;
 
                 //CONDITIONAL JUMPS
-                case 0xCA: JP_cc_nn(true, 0x80); break; // JP Z, nn
-                case 0xC2: JP_cc_nn(false, 0x80); break; // JP NZ, nn
-                case 0xDA: JP_cc_nn(true, 0x10); break; // JP C, nn
-                case 0xD2: JP_cc_nn(false, 0x10); break; // JP NC, nn
+                case 0xCA: // JP Z, nn
+                    taken = JP_cc_nn(true, 0x80);
+                    if (taken) extraCycles += 4;
+                    break; 
+                case 0xC2: // JP NZ, nn
+                    taken = JP_cc_nn(false, 0x80);
+                    if (taken) extraCycles += 4;
+                    break; 
+                case 0xDA: // JP C, nn
+                    taken = JP_cc_nn(true, 0x10);
+                    if (taken) extraCycles += 4;
+                    break; 
+                case 0xD2: // JP NC, nn
+                    taken = JP_cc_nn(false, 0x10);
+                    if (taken) extraCycles += 4;
+                    break; 
 
                 //RELATIVE JUMPS
                 case 0x18: JR_n(); break;
-                case 0x28: JR_cc_n(true, 0x80); break; // JR Z, n
-                case 0x20: JR_cc_n(false, 0x80); break; // JR NZ, n
-                case 0x38: JR_cc_n(true, 0x10); break; // JR C, n
+                case 0x28: // JR Z, n
+                    taken = JR_cc_n(true, 0x80);
+                    if (taken) extraCycles += 4;
+                    break; 
+                case 0x20: // JR NZ, n
+                    taken = JR_cc_n(false, 0x80);
+                    if (taken) extraCycles += 4;
+                    break; 
+                case 0x38: // JR C, n
+                    taken = JR_cc_n(true, 0x10);
+                    if (taken) extraCycles += 4;
+                    break; 
 
                 //CALL INSTRUCTIONS
                 case 0xCD: CALL_nn(); break; //CALL nn
-                case 0xCC: CALL_cc_nn(true, 0x80); break; // CALL Z, nn
-                case 0xC4: CALL_cc_nn(false, 0x80); break; // CALL NZ, nn
-                case 0xDC: CALL_cc_nn(true, 0x10); break; // CALL C, nn
-                case 0xD4: CALL_cc_nn(false, 0x10); break; // CALL NC, nn
+                case 0xCC: 
+                    taken = CALL_cc_nn(true, 0x80);
+                    if (taken) extraCycles += 12;
+                    break; // CALL Z, nn
+                case 0xC4:
+                    taken = CALL_cc_nn(false, 0x80);
+                    if (taken) extraCycles += 12;
+                    break; // CALL NZ, nn
+                case 0xDC:
+                    taken = CALL_cc_nn(true, 0x10);
+                    if (taken) extraCycles += 12;
+                    break; // CALL C, nn
+                case 0xD4:
+                    taken = CALL_cc_nn(false, 0x10);
+                    if (taken) extraCycles += 12;
+                    break; // CALL NC, nn
 
                 //RET INSTRUCTIONS
                 case 0xC9: RET(); break; // RET
-                case 0xC8: RET_cc(true, 0x80); break; // RET Z
-                case 0xC0: RET_cc(false, 0x80); break; // RET NZ
-                case 0xD8: RET_cc(true, 0x10); break; // RET C
-                case 0xD0: RET_cc(false, 0x10); break; // RET NC
+                case 0xC8: 
+                    taken = RET_cc(true, 0x80);
+                    if (taken) extraCycles += 12;
+                    break; // RET Z
+                case 0xC0:
+                    taken = RET_cc(false, 0x80);
+                    if (taken) extraCycles += 12;
+                    break; // RET NZ
+                case 0xD8:
+                    taken = RET_cc(true, 0x10);
+                    if (taken) extraCycles += 12;
+                    break; // RET C
+                case 0xD0:
+                    taken = RET_cc(false, 0x10);
+                    if (taken) extraCycles += 12;
+                    break; // RET NC
 
                 //PUSH INSTRUCTIONS
                 case 0xC5: PUSH_16(BC); break; // PUSH BC
@@ -291,6 +581,8 @@ namespace GameBoyEmulator.CPU
                 default:
                     throw new NotImplementedException($"Unknown opcode: {opcode:X2}");
             }
+
+            return extraCycles;
         }
 
         private void LD_d16(ref byte high, ref byte low)
@@ -333,6 +625,14 @@ namespace GameBoyEmulator.CPU
             if ((value & 0x0F) + 1 > 0x0F) F |= 0x20; // Set Half-Carry flag (H)
 
             _memory.WriteByte(HL, result);
+        }
+
+        private void INC_HL_RegisterPair()
+        {
+            ushort value = HL;
+            value++;
+            H = (byte)(value >> 8);
+            L = (byte)(value & 0xFF);
         }
 
         private void DEC_BC()
@@ -558,18 +858,18 @@ namespace GameBoyEmulator.CPU
             PC = (ushort)((high << 8) | low);
         }
 
-        private int JP_cc_nn(bool condition, byte flag)
+        private bool JP_cc_nn(bool condition, byte flag)
         {
-            if ((F & flag) != 0 == condition)
+            bool taken = ((F & flag) != 0) == condition;
+            if (taken)
             {
                 JP_nn();
-                return 16;
             }
             else
             {
-                PC += 2; // Skip the 16-bit immediate value
-                return 12;
+                PC += 2;
             }
+            return taken;
         }
 
         private void JR_n()
@@ -578,18 +878,18 @@ namespace GameBoyEmulator.CPU
             PC = (ushort)(PC + offset);
         }
 
-        private int JR_cc_n(bool condition, byte flag)
+        private bool JR_cc_n(bool condition, byte flag)
         {
-            if ((F & flag) != 0 == condition)
+            bool taken = ((F & flag) != 0) == condition;
+            if (taken)
             {
                 JR_n();
-                return 12;
             }
             else
             {
-                PC++; // Skip the offset
-                return 8;
+                PC++;
             }
+            return taken;
         }
 
         private void CALL_nn()
@@ -602,18 +902,18 @@ namespace GameBoyEmulator.CPU
             PC = address; // Jump to the new address
         }
 
-        private int CALL_cc_nn(bool condition, byte flag)
+        private bool CALL_cc_nn(bool condition, byte flag)
         {
-            if ((F & flag) != 0 == condition)
+            bool taken = ((F & flag) != 0) == condition;
+            if (taken)
             {
                 CALL_nn();
-                return 24;
             }
             else
             {
-                PC += 2; // Skip the 16-bit immediate address
-                return 12;
+                PC += 2;
             }
+            return taken;
         }
 
         private void RET()
@@ -621,17 +921,14 @@ namespace GameBoyEmulator.CPU
             PC = POP(); // Pop the return address from the stack
         }
 
-        private int RET_cc(bool condition, byte flag)
+        private bool RET_cc(bool condition, byte flag)
         {
-            if ((F & flag) != 0 == condition)
+            bool taken = ((F & flag) != 0) == condition;
+            if (taken)
             {
                 RET();
-                return 20;
             }
-            else
-            {
-                return 8;
-            }
+            return taken;
         }
 
         public int ExecuteCB(byte opcode)

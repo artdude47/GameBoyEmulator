@@ -48,26 +48,6 @@
   <ItemGroup>
     <Compile Include="CPU\GameBoyCPU.cs" />
     <Compile Include="Memory\GameBoyMemory.cs" />
-    <Compile Include="Tests\MemoryTests.cs" />
-    <Compile Include="Tests\TestADD_A_r.cs" />
-    <Compile Include="Tests\TestAND_A_r.cs" />
-    <Compile Include="Tests\TestCallAndRet.cs" />
-    <Compile Include="Tests\TestCP_A_r.cs" />
-    <Compile Include="Tests\TestDEC_BC.cs" />
-    <Compile Include="Tests\TestIncDec.cs" />
-    <Compile Include="Tests\TestINC_BC.cs" />
-    <Compile Include="Tests\TestJumps.cs" />
-    <Compile Include="Tests\TestLD_A_BC.cs" />
-    <Compile Include="Tests\TestLD_BC_A.cs" />
-    <Compile Include="Tests\TestLD_BC_d16.cs" />
-    <Compile Include="Tests\TestLD_HL_Instructions.cs" />
-    <Compile Include="Tests\TestLD_Immediate.cs" />
-    <Compile Include="Tests\TestOR_A_r.cs" />
-    <Compile Include="Tests\TestPushAndPop.cs" />
-    <Compile Include="Tests\TestSBC_A_r.cs" />
-    <Compile Include="Tests\TestSUB_A_r.cs" />
-    <Compile Include="Tests\TestSuite.cs" />
-    <Compile Include="Tests\TestXOR_A_r.cs" />
     <Compile Include="UI\Form1.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -104,6 +84,7 @@
   <ItemGroup>
     <Folder Include="Graphics\" />
     <Folder Include="Input\" />
+    <Folder Include="Tests\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

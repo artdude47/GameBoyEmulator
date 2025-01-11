@@ -1,57 +1,95 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using GameBoyEmulator.Tests;
+using GameBoyEmulator.CPU;
+using GameBoyEmulator.Memory;
+using System.Threading.Tasks;
+using System.IO;
 
 namespace GameBoyEmulator
 {
     public partial class Form1 : Form
     {
+        private GameBoyMemory _memory;
+        private GameBoyCPU _cpu;
+        private bool _running;
+        private Task _emulationTask;
+
         public Form1()
         {
             InitializeComponent();
         }
 
-        private void btnTestMemory_Click(object sender, EventArgs e)
+        private void Form1_Load(object sender, EventArgs e)
         {
-            string results = MemoryTests.RunTests();
-            MessageBox.Show(results, "Memory Test Result");
+            _memory = new GameBoyMemory();
+            _cpu = new GameBoyCPU(_memory);
+
+            _running = true;
+            _emulationTask = Task.Run(() => EmulationLoop());
         }
 
-        private void btnTestLD_BC_d16_Click(object sender, EventArgs e)
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            // Use a StringBuilder to collect test results
-            StringBuilder results = new StringBuilder();
+            _running = false;
+            _emulationTask?.Wait(1000);
+        }
 
-            // Run each test method and append its result
-            results.AppendLine(TestLD_BC_d16.RunTest());
-            results.AppendLine(TestINC_BC.RunTest());
-            results.AppendLine(TestDEC_BC.RunTest());
-            results.AppendLine(TestLD_BC_A.RunTest());
-            results.AppendLine(TestLD_A_BC.RunTest());
-            results.AppendLine(TestLD_Immediate.RunTest());
-            results.AppendLine(TestLD_HL_Instructions.RunTest());
-            results.AppendLine(TestADD_A_r.RunTest());
-            results.AppendLine(TestSUB_A_r.RunTest());
-            results.AppendLine(TestSBC_A_r.RunTest());
-            results.AppendLine(TestAND_A_r.RunTest());
-            results.AppendLine(TestOR_A_r.RunTest());
-            results.AppendLine(TestXOR_A_r.RunTest());
-            results.AppendLine(TestCP_A_r.RunTest());
-            results.AppendLine(TestJumps.RunTest());
-            results.AppendLine(TestCallAndRet.RunTest());
-            results.AppendLine(TestPushAndPop.RunTest());
-            results.AppendLine(TestIncDec.RunTest());
-            results.AppendLine(TestSuite.RunAllTests());
+        private void EmulationLoop()
+        {
+            const int cyclesPerFrame = 70224; // ~4194304 Hz / ~59.7 FPS
+            var stopwatch = new System.Diagnostics.Stopwatch();
+            stopwatch.Start();
 
-            // Return the full results
-            MessageBox.Show(results.ToString());
+            long frameCount = 0;
+
+            while (_running)
+            {
+                int cyclesThisFrame = 0;
+
+                //Run CPU until we hit ~70224 cycles for one frame
+                while (cyclesThisFrame < cyclesPerFrame)
+                {
+                    //Step the CPU for one instruction
+                    int used = _cpu.Step();
+
+                    //Update timers
+                    _cpu.UpdateTimers(used);
+
+                    cyclesThisFrame += used;
+                }
+            }
+        }
+
+        private void loadROMToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Filter = "GameBoy ROMs (*.gb,*.gpc)|*.gb;*.gbc|All files (*.*)|*.*";
+                openFileDialog.Title = "Select a GameBoy ROM";
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        //Read the file
+                        var romData = File.ReadAllBytes(openFileDialog.FileName);
+
+                        //Load into gameboy memory
+                        _memory.LoadRom(romData);
+
+                        //Reset CPU to starting values
+                        _cpu.PC = 0x0100;
+                        _cpu.SP = 0xFFFE;
+
+                        Console.WriteLine("ROM loaded successfully!");
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error Loading ROM: " + ex.Message);
+                    }
+                }
+            }
         }
     }
 }
